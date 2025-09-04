@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glossy Music Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 3rem;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.8);
+            font-size: 1.2rem;
+        }
+
+        .genres-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 2rem;
+        }
+
+        .genre-btn {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 2rem 1.5rem;
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .genre-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .genre-btn:hover::before {
+            opacity: 1;
+        }
+
+        .genre-btn:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .genre-btn:active {
+            transform: translateY(-5px);
+        }
+
+        .player-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(20px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .player-content {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(30px);
+            border-radius: 30px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .track-info {
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .track-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .track-singer {
+            font-size: 1.3rem;
+            opacity: 0.8;
+            margin-bottom: 1rem;
+        }
+
+        .track-genre {
+            font-size: 1rem;
+            opacity: 0.6;
+            background: rgba(255,255,255,0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 15px;
+            display: inline-block;
+        }
+
+        .player-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .control-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .skip-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .loading {
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .playlist-info {
+            color: rgba(255,255,255,0.7);
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .genres-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .genre-btn {
+                padding: 1.5rem 1rem;
+                font-size: 1.1rem;
+            }
+            
+            .player-content {
+                padding: 2rem;
+            }
+            
+            .track-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Glossy Music Player</h1>
+            <p>Choose your favorite genre and enjoy the music</p>
+        </div>
+        
+        <div class="loading" id="loading">Loading music library...</div>
+        <div class="genres-grid" id="genresGrid"></div>
+    </div>
+
+    <div class="player-overlay" id="playerOverlay">
+        <div class="player-content">
+            <button class="close-btn" onclick="closePlayer()">×</button>
+            
+            <div class="track-info">
+                <div class="track-title" id="trackTitle">Loading...</div>
+                <div class="track-singer" id="trackSinger">Artist</div>
+                <div class="track-genre" id="trackGenre">Genre</div>
+            </div>
+
+            <audio id="audioPlayer" controls style="width: 100%; margin: 1rem 0;"></audio>
+
+            <div class="player-controls">
+                <button class="control-btn" onclick="previousTrack()">⏮</button>
+                <button class="control-btn skip-btn" onclick="nextTrack()">⏭</button>
+                <button class="control-btn" onclick="shufflePlaylist()">🔀</button>
+            </div>
+
+            <div class="playlist-info" id="playlistInfo">
+                Track 1 of 1 • Rock'n'roll Playlist
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let musicData = [];
+        let currentPlaylist = [];
+        let currentTrackIndex = 0;
+        let currentGenre = '';
+
+        // Fetch and parse CSV data
+        async function loadMusicData() {
+            try {
+                const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTTPb7TRMHE1IWfyloWxtwdUeB635fDt6vOQhHz7mnIgCAkggaf4GZWyShlVxDiHxburgP-Hm83yD9W/pub?output=csv';
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                
+                // Simple CSV parsing
+                const lines = csvText.split('\n');
+                const headers = lines[0].split(',');
+                
+                musicData = lines.slice(1)
+                    .filter(line => line.trim())
+                    .map(line => {
+                        const values = line.split(',');
+                        const song = {};
+                        headers.forEach((header, index) => {
+                            song[header.trim()] = values[index] ? values[index].trim() : '';
+                        });
+                        return song;
+                    })
+                    .filter(song => song.url && song.title); // Filter out incomplete entries
+
+                displayGenres();
+                document.getElementById('loading').style.display = 'none';
+            } catch (error) {
+                console.error('Error loading music data:', error);
+                document.getElementById('loading').innerHTML = 'Error loading music library. Please try again later.';
+            }
+        }
+
+        // Extract unique genres and display as buttons
+        function displayGenres() {
+            const genres = new Set();
+            
+            musicData.forEach(song => {
+                // Add genres from style column (treating it as genre1)
+                if (song.style) genres.add(song.style);
+                // If there were genre1 and genre2 columns, we would add them here
+                if (song.genre1) genres.add(song.genre1);
+                if (song.genre2) genres.add(song.genre2);
+            });
+
+            const genresGrid = document.getElementById('genresGrid');
+            genresGrid.innerHTML = '';
+
+            genres.forEach(genre => {
+                const button = document.createElement('button');
+                button.className = 'genre-btn';
+                button.textContent = genre;
+                button.onclick = () => playGenre(genre);
+                genresGrid.appendChild(button);
+            });
+        }
+
+        // Create playlist for selected genre
+        function playGenre(genre) {
+            currentGenre = genre;
+            
+            // Find songs matching the genre
+            currentPlaylist = musicData.filter(song => 
+                song.style === genre || 
+                song.genre1 === genre || 
+                song.genre2 === genre
+            );
+
+            // Add similar genres (you can expand this logic)
+            const similarSongs = musicData.filter(song => {
+                const songGenres = [song.style, song.genre1, song.genre2].filter(g => g);
+                return songGenres.some(g => g && g.toLowerCase().includes(genre.toLowerCase()));
+            });
+            
+            // Combine and remove duplicates
+            const allSongs = [...currentPlaylist, ...similarSongs];
+            currentPlaylist = allSongs.filter((song, index, self) => 
+                index === self.findIndex(s => s.url === song.url)
+            );
+
+            // Shuffle playlist
+            shuffleArray(currentPlaylist);
+            
+            currentTrackIndex = 0;
+            showPlayer();
+            playCurrentTrack();
+        }
+
+        // Shuffle array function
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Show player overlay
+        function showPlayer() {
+            document.getElementById('playerOverlay').style.display = 'flex';
+        }
+
+        // Close player overlay
+        function closePlayer() {
+            document.getElementById('playerOverlay').style.display = 'none';
+            document.getElementById('audioPlayer').pause();
+        }
+
+        // Play current track
+        function playCurrentTrack() {
+            if (currentPlaylist.length === 0) return;
+
+            const track = currentPlaylist[currentTrackIndex];
+            const audioPlayer = document.getElementById('audioPlayer');
+            
+            document.getElementById('trackTitle').textContent = track.title || 'Unknown Title';
+            document.getElementById('trackSinger').textContent = track.singer || 'Unknown Artist';
+            document.getElementById('trackGenre').textContent = track.style || currentGenre;
+            document.getElementById('playlistInfo').textContent = 
+                `Track ${currentTrackIndex + 1} of ${currentPlaylist.length} • ${currentGenre} Playlist`;
+
+            audioPlayer.src = track.url;
+            audioPlayer.load();
+            
+            // Auto-play when ready
+            audioPlayer.addEventListener('canplaythrough', () => {
+                audioPlayer.play().catch(e => console.log('Autoplay prevented'));
+            }, { once: true });
+
+            // Auto-advance to next track when current ends
+            audioPlayer.addEventListener('ended', nextTrack, { once: true });
+        }
+
+        // Next track
+        function nextTrack() {
+            if (currentPlaylist.length === 0) return;
+            
+            currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.length;
+            playCurrentTrack();
+        }
+
+        // Previous track
+        function previousTrack() {
+            if (currentPlaylist.length === 0) return;
+            
+            currentTrackIndex = currentTrackIndex > 0 ? currentTrackIndex - 1 : currentPlaylist.length - 1;
+            playCurrentTrack();
+        }
+
+        // Shuffle current playlist
+        function shufflePlaylist() {
+            if (currentPlaylist.length === 0) return;
+            
+            const currentTrack = currentPlaylist[currentTrackIndex];
+            shuffleArray(currentPlaylist);
+            
+            // Keep current track at index 0
+            const currentIndex = currentPlaylist.findIndex(track => track.url === currentTrack.url);
+            if (currentIndex !== -1) {
+                [currentPlaylist[0], currentPlaylist[currentIndex]] = [currentPlaylist[currentIndex], currentPlaylist[0]];
+                currentTrackIndex = 0;
+            }
+            
+            playCurrentTrack();
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('playerOverlay').style.display === 'flex') {
+                switch(e.key) {
+                    case ' ':
+                        e.preventDefault();
+                        const audio = document.getElementById('audioPlayer');
+                        audio.paused ? audio.play() : audio.pause();
+                        break;
+                    case 'ArrowRight':
+                        nextTrack();
+                        break;
+                    case 'ArrowLeft':
+                        previousTrack();
+                        break;
+                    case 'Escape':
+                        closePlayer();
+                        break;
+                }
+            }
+        });
+
+        // Load music data on page load
+        loadMusicData();
+    </script>
+</body>
+</html>
